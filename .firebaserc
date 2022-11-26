@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "astrotwins-fc3a0"
+  },
+  "targets": {
+    "astrotwins-fc3a0": {
+      "hosting": {
+        "production": [
+          "myastrotwins"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

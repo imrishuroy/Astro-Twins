@@ -6,12 +6,12 @@ String get appId {
 }
 
 /// Please refer to https://docs.agora.io/en/Agora%20Platform/token
-String get token {
-  // Allow pass a `token` as an environment variable with name `TEST_TOKEN` by using --dart-define
-  return const String.fromEnvironment('TEST_TOKEN',
-      defaultValue:
-          '007eJxTYPiaZOqqaZF1PvDMFI+re6wzbE7Nk8tY9mQ/t9SvkvdX/0QoMKRZAIGBUaJlapKpSZJJclKaaZqJuXmygbGJUVKygflUgdrkhkBGhnjJxQyMUAjiCzA4FpcU5Ss4lqZk5is4J+bkMDAAAByMI84=');
-}
+// String get token {
+//   // Allow pass a `token` as an environment variable with name `TEST_TOKEN` by using --dart-define
+//   return const String.fromEnvironment('TEST_TOKEN',
+//       defaultValue:
+//           '007eJxTYPiaZOqqaZF1PvDMFI+re6wzbE7Nk8tY9mQ/t9SvkvdX/0QoMKRZAIGBUaJlapKpSZJJclKaaZqJuXmygbGJUVKygflUgdrkhkBGhnjJxQyMUAjiCzA4FpcU5Ss4lqZk5is4J+bkMDAAAByMI84=');
+// }
 
 /// Your channel ID
 String get channelId {

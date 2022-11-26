@@ -17,9 +17,9 @@ import 'blocs/simple_bloc_observer.dart';
 import 'config/custom_router.dart';
 import 'config/shared_prefs.dart';
 import 'firebase_options.dart';
+import 'repositories/agora/agora_repository.dart';
 import 'repositories/auth/auth_repo.dart';
 import 'repositories/profile/profile_repository.dart';
-import 'screens/call/audio_call_example.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,8 +31,8 @@ Future<void> main() async {
   EquatableConfig.stringify = kDebugMode;
   Bloc.observer = SimpleBlocObserver();
 
-  // runApp(const MyApp());
-  runApp(const MaterialApp(home: JoinChannelAudio()));
+  runApp(const MyApp());
+  //runApp(const MaterialApp(home: JoinChannelAudio()));
 }
 
 class MyApp extends StatelessWidget {
@@ -71,7 +71,10 @@ class MyApp extends StatelessWidget {
         ),
         RepositoryProvider<AstroRepository>(
           create: (_) => AstroRepository(),
-        )
+        ),
+        RepositoryProvider<AgoraRepository>(
+          create: (_) => AgoraRepository(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
