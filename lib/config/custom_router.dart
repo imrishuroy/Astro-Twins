@@ -1,23 +1,23 @@
+import 'package:astro_twins/screens/call/agora_voice_call.dart';
+import 'package:flutter/material.dart';
+
+import '/screens/astrologers/astrologer_details.dart';
 import '/screens/chat/astro_chat_screen.dart';
 import '/screens/chat/chat_screen.dart';
 import '/screens/chat/media_preview.dart';
-import '/screens/faq/faq_screen.dart';
-import '/screens/reset-password/reset_password.dart';
-import '/screens/terms/terms_screen.dart';
-import '/screens/privacy/privacy_screen.dart';
-import '/screens/profile/edit_profile_screen.dart';
 import '/screens/dashboard/widgets/twin_details.dart';
-import '/screens/astrologers/astrologer_details.dart';
+import '/screens/faq/faq_screen.dart';
 import '/screens/login/login_screen.dart';
 import '/screens/nav/nav_screen.dart';
 import '/screens/notifictions/notifications_screen.dart';
+import '/screens/privacy/privacy_screen.dart';
+import '/screens/profile/edit_profile_screen.dart';
 import '/screens/registration/screens/registration_prompt.dart';
 import '/screens/registration/screens/registration_screen.dart';
-import '../screens/search-twins/search_twins_screen.dart';
-import 'package:flutter/material.dart';
-
+import '/screens/reset-password/reset_password.dart';
 import '/screens/splash/splash_screen.dart';
-
+import '/screens/terms/terms_screen.dart';
+import '../screens/search-twins/search_twins_screen.dart';
 import 'auth_wrapper.dart';
 
 class CustomRouter {
@@ -86,6 +86,10 @@ class CustomRouter {
 
       case FaqScreen.routeName:
         return FaqScreen.route();
+
+      case AgoraVoiceCall.routeName:
+        return AgoraVoiceCall.route(
+            args: settings.arguments as AgoraVoiceCallArgs);
       default:
         return _errorRoute();
     }

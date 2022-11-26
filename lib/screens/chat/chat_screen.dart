@@ -1,5 +1,7 @@
+import 'package:astro_twins/screens/call/agora_voice_call.dart';
 import 'package:astro_twins/widgets/ask_to_action.dart';
 import 'package:astro_twins/widgets/show_snakbar.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
@@ -121,7 +123,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 const SizedBox(height: 40.0),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -144,17 +145,28 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
                 const Spacer(),
-                // const Text('Modal BottomSheet'),
-                // ElevatedButton(
-                //   child: const Text('Close BottomSheet'),
-                //   onPressed: () => Navigator.pop(context),
-                // )
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  Future<void> sendNotificationToOtherUser() async {
+    try {
+      HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('sendCallNotification');
+
+      final resp = await callable.call(<String, dynamic>{
+        'receiverId': widget.otherUser?.userId,
+        'callerName': widget.otherUser?.name,
+        'callerPhoto': widget.otherUser?.profileImg
+      });
+      print('result: ${resp.data}');
+    } catch (error) {
+      print('Error in sending notification: $error');
+    }
   }
 
   @override
@@ -257,7 +269,17 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           const Spacer(),
                           IconButton(
-                            onPressed: () async => _makePhoneCall(),
+                            // onPressed: () async => _makePhoneCall(),
+                            onPressed: () {
+                              sendNotificationToOtherUser();
+
+                              Navigator.of(context).pushNamed(
+                                AgoraVoiceCall.routeName,
+                                arguments: AgoraVoiceCallArgs(
+                                  otherUser: widget.otherUser,
+                                ),
+                              );
+                            },
                             icon: const Icon(
                               Icons.call,
                               size: 22.0,

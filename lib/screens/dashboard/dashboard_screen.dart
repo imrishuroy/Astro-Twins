@@ -1,8 +1,20 @@
+import 'dart:convert';
 import 'dart:ui';
 
+import 'package:astro_twins/config/paths.dart';
+import 'package:astro_twins/models/app_user.dart';
+import 'package:astro_twins/screens/call/agora_voice_call.dart';
+import 'package:astro_twins/services/local_notification_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:connectycube_flutter_call_kit/connectycube_flutter_call_kit.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:timezone/data/latest.dart';
+import 'package:uuid/uuid.dart';
 
 import '/blocs/auth/auth_bloc.dart';
 import '/config/shared_prefs.dart';
@@ -21,6 +33,10 @@ import '/widgets/notification_icon.dart';
 import '/widgets/request_sent_dialog.dart';
 import '/widgets/show_snakbar.dart';
 
+export 'package:timeago/timeago.dart';
+export 'package:timezone/data/latest_all.dart';
+export 'package:timezone/timezone.dart';
+
 class DashBoardScreen extends StatefulWidget {
   const DashBoardScreen({Key? key}) : super(key: key);
 
@@ -30,12 +46,183 @@ class DashBoardScreen extends StatefulWidget {
 
 class _DashBoardScreenState extends State<DashBoardScreen> {
   late PageController _pageController;
+  //final bool _isLoading = false;
+  final localNotifcationHelper = LocalNotificationService();
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   @override
   void initState() {
+    ConnectycubeFlutterCallKit.instance.init(
+      onCallAccepted: (event) async {
+        final name = event.userInfo?['name'];
+        final userId = event.userInfo?['userId'];
+        final profilePic = event.userInfo?['profilePic'];
+        final user = AppUser(
+          name: name,
+          userId: userId,
+          profileImg: profilePic,
+        );
+        print('onCallAccepted');
+        print('name onCallAccepted: $name');
+
+        Navigator.of(context).pushNamed(AgoraVoiceCall.routeName,
+            arguments: AgoraVoiceCallArgs(otherUser: user));
+      },
+      onCallRejected: (_) async {
+        print('onCallRejected');
+      },
+    );
+
+    // ConnectycubeFlutterCallKit.showCallNotification(
+    //   const CallEvent(
+    //     sessionId: 'sessionId22',
+    //     callType: 1,
+    //     callerId: 123,
+    //     callerName: 'Rishu',
+    //     opponentsIds: {123},
+    //   ),
+    // );
     _pageController = PageController();
     context.read<NotificationsCubit>().loadUserNotifications();
+    initializeTimeZones();
+    localNotifcationHelper.initialiseSettings(onClickNotification);
+    _notificationSetup();
+
     super.initState();
+  }
+
+  Future<void> _notificationSetup() async {
+    try {
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        String? token = await messaging.getToken();
+        if (token != null) {
+          saveTokenToDatabase(token);
+        }
+
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+          final data = message.data;
+          print('onMessage: $data');
+          //final sessionId = data['sessionId'];
+          final name = data['callerName'];
+          //  final userId = data['callerId'];
+          final profilePic = data['callerPhoto'];
+
+          //  print('onMessage profilePic: $profilePic');
+
+          ConnectycubeFlutterCallKit.showCallNotification(
+            CallEvent(
+              sessionId: const Uuid().v4(),
+              callType: 1,
+              callerId: 123,
+              callerName: name,
+              opponentsIds: const {123},
+              userInfo: {
+                'name': name,
+                //'userId': userId,
+                'profilePic': profilePic,
+              },
+            ),
+          );
+
+          // the call received somewhere
+
+          print('Got a message whilst in the foreground!');
+          print('Message data: ${message.data}');
+          print('Message data: ${message.toString()}');
+
+          // if (message.notification != null) {
+          //   await localNotifcationHelper.showNotificationMediaStyle(
+          //     message: message,
+          //   );
+
+          print(
+              'Message also contained a notification: ${message.notification}');
+          //}
+        });
+
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+          print('A new onMessageOpenedApp event was published!');
+
+          final data = message.data;
+          print('onMessage: $data');
+          //final sessionId = data['sessionId'];
+          final name = data['callerName'];
+          //  final userId = data['callerId'];
+          final profilePic = data['callerPhoto'];
+
+          //  print('onMessage profilePic: $profilePic');
+
+          ConnectycubeFlutterCallKit.showCallNotification(
+            CallEvent(
+              sessionId: const Uuid().v4(),
+              callType: 1,
+              callerId: 123,
+              callerName: name,
+              opponentsIds: const {123},
+              userInfo: {
+                'name': name,
+                //'userId': userId,
+                'profilePic': profilePic,
+              },
+            ),
+          );
+          // Navigator.of(context).pushNamed(AppRouterPath.notificationsScreen);
+          print(
+              'Message also contained a notification: ${message.notification}');
+        });
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        print('User granted provisional permission');
+      } else {
+        print('User declined or has not accepted permission');
+      }
+    } catch (error) {
+      print('Error in notification setup ${error.toString()}');
+    }
+  }
+
+  Future<void> saveTokenToDatabase(String token) async {
+    try {
+      // Assume user is logged in for this example
+      print('server notification runs');
+
+      final authBloc = context.read<AuthBloc>();
+
+      await FirebaseFirestore.instance
+          .collection(Paths.users)
+          .doc(authBloc.state.user?.userId)
+          .update({
+        'tokens': FieldValue.arrayUnion([token]),
+      });
+    } catch (error) {
+      print('Error adding token to the server ${error.toString()}');
+    }
+  }
+
+  void onClickNotification(NotificationResponse response) {
+    try {
+      if (response.payload != null) {
+        final payload = jsonDecode(response.payload!) as Map?;
+
+        if (payload != null) {
+          final postId = payload['data']['postId'] as String?;
+
+          print('Post id $postId');
+        }
+      }
+    } catch (error) {
+      print('Error in open notifications ${error.toString()}');
+    }
   }
 
   String connectionStatus(ConnectStatus? status) {
@@ -53,6 +240,22 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
       //   return 'Connect';
       default:
         return 'Connect';
+    }
+  }
+
+  void sendNotification() async {
+    try {
+      HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('sendCallNotification');
+
+      final resp = await callable.call(<String, dynamic>{
+        'receiverId': 'OuJjCR2CxHWg2sEsy8amjg6OXnZ2',
+        'name': 'Rishu',
+        'sessionId': const Uuid().v4(),
+      });
+      print('result: ${resp.data}');
+    } catch (error) {
+      print('Error in send notification ${error.toString()}');
     }
   }
 
@@ -79,6 +282,11 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
         ),
       ),
       child: Scaffold(
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () {
+        //     sendNotification();
+        //   },
+        // ),
         drawer: const AppDrawer(),
         backgroundColor: Colors.transparent,
         body: BlocConsumer<DashboardCubit, DashboardState>(
