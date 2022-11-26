@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "324928567555",
+    "project_id": "astrotwins-fc3a0",
+    "storage_bucket": "astrotwins-fc3a0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:324928567555:android:e6242da1fa0b8f47751136",
+        "android_client_info": {
+          "package_name": "com.myastrotwins.astro_twins"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "324928567555-0t23mc1603kgnk6qfbmiu4do65ba2o2a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.myastrotwins.astro_twins",
+            "certificate_hash": "e2dcbbc7688b45dde668a26877cfb69d74023b32"
+          }
+        },
+        {
+          "client_id": "324928567555-m55nvasfpof078p9j5k8fcrcs6hoglj5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPljrh0-0saYidlTJq3kwhTvr0oPQrLIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "324928567555-m55nvasfpof078p9j5k8fcrcs6hoglj5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "324928567555-qfpr95g8g768uaf0ustsv89vtiu7ds5o.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.myastrotwins.astroTwins"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,16 @@
+const List<String> timeZones = [
+  'GMT (Greenwich Mean Time)',
+  'UTC (Universal Coordinated Time)',
+  'ECT (European Central Time)',
+  'EET (Eastern European Time)',
+  'ART ((Arabic) Egypt Standard Time)',
+  'EAT (Eastern African Time)',
+  'MET (Middle East Time)',
+  'NET (Near East Time)',
+  'PLT (Pakistan Lahore Time)',
+  'IST (India Standard Time)',
+  'BST (Bangladesh Standard Time)',
+  'VST (Vietnam Standard Time)',
+  'CTT (China Taiwan Time)',
+  'JST (Japan Standard Time)',
+];

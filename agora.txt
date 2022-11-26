@@ -1,0 +1,23 @@
+App ID
+f888802a9eb54b4cbf5f477c0342bc07
+
+App certificate
+efc2a723e2c2467193738793af60d54f
+
+
+Temp Token
+007eJxTYDj3y8IqaPaS5xf12PoOTmy/k1st+MZK82DBV4c3K5Lfaq5QYEizAAIDo0TL1CRTkyST5KQ00zQTc/NkA2MTo6RkA/NX7JXJDYGMDLtM5JkZGSAQxBdgcCwuKcpXcCxNycxXcE7MyWFgAAB59SSy
+
+
+https://docs.agora.io/en/voice-calling/reference/firewall?platform=flutter
+
+How to do Voice Call with Flutter, Firebase and Agora ?
+https://omasuaku.medium.com/how-to-do-voice-call-with-flutter-firebase-and-agora-f8c71185ad36
+
+How !to make a calling app in Flutter for Android devices
+https://dev.to/chinmaykb/how-to-make-a-calling-app-in-flutter-for-android-devices-3hpg
+
+https://github.com/ConnectyCube/connectycube-flutter-call-kit
+
+Agora Token Sever
+https://www.google.com/search?q=crease+agota+token+generation+server+node+js&rlz=1C5CHFA_enIN1021IN1021&oq=crease+agota+token+generation+server+node+js&aqs=chrome..69i57j0i546l4.15123j1j1&sourceid=chrome&ie=UTF-8#fpstate=ive&vld=cid:507e02dc,vid:KcLypppA2IQ

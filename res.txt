@@ -1,0 +1,35 @@
+add login scree
+refactor custom text screen to have only one color border
+
+add percentage container of profile complete on profile screen
+
+videos about email confirmation
+
+Flutter Tutorial - Verify Email | Firebase Authentication 🔥 [2022] 4/4 Email And Password
+https://www.youtube.com/watch?v=rTr8BUlUftg
+
+
+https://www.youtube.com/watch?v=TLGe44gaEUM
+
+https://dev.to/dav4thevid/how-to-add-firebase-email-verification-to-your-flutter-app-4cbi
+
+https://stackoverflow.com/questions/57192651/flutter-how-to-listen-to-the-firebaseuser-is-email-verified-boolean
+
+    final dateFormat = DateFormat('dd MMMM yyyy');
+
+    
+    
+    https://blog.logrocket.com/how-to-build-chat-application-flutter-firebase/
+    https://medium.com/flutter-community/building-a-chat-app-with-flutter-and-firebase-from-scratch-9eaa7f41782e
+
+https://honesdev.com/playing-and-caching-videos-in-flutter/
+https://stackoverflow.com/questions/58025580/flutter-streaming-and-caching-videos
+
+    // No tweens found just after login
+    // Add media lenght check while uploadin media 
+
+    https://medium.com/@duytq94/flutter-chat-app-extended-push-notification-messages-a26c669f4675
+
+    astrologer have lat log 
+
+    https://sanelyexcel.blogspot.com/2022/05/flutter-ui-creating-chatbox.html
