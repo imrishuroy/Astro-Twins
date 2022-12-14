@@ -43,17 +43,13 @@ exports.generateAccessToken = functions.https.onRequest((req, res) => {
 // trigger FCM notification
 
 exports.sendCallNotification = functions.https.onCall(async (data, context) => {
-
+    const sessionId = data.sessionId;
     const receiverId = data.receiverId;
     const callerName = data.callerName;
     const callerPhoto = data.callerPhoto;
+    const channelName = data.channelName;
 
     const receiverDoc = await admin.firestore().collection('users').doc(receiverId).get();
-
-    //return receiverDoc.get('userId');
-
-    // const payload = {'sessionId': sessionId, 'name': name, 'callerId': callerId, 'callerName': callerName, 'callerPhoto': callerPhoto};
-    const payload = {'callerName': callerName, 'callerPhoto': callerPhoto,};
 
     await admin.messaging().sendToDevice(
         receiverDoc.get('tokens'),
@@ -63,7 +59,7 @@ exports.sendCallNotification = functions.https.onCall(async (data, context) => {
               body: `${callerName} is calling you`,
             },
 
-            data: payload,
+            data: {'sessionId': sessionId, 'callerName': callerName, 'callerPhoto': callerPhoto, 'channelName': channelName},
           },
           {
             // Required for background/quit data-only messages on iOS

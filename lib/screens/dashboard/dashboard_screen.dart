@@ -1,10 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:astro_twins/config/paths.dart';
-import 'package:astro_twins/models/app_user.dart';
-import 'package:astro_twins/screens/call/agora_voice_call.dart';
-import 'package:astro_twins/services/local_notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:connectycube_flutter_call_kit/connectycube_flutter_call_kit.dart';
@@ -17,15 +13,19 @@ import 'package:timezone/data/latest.dart';
 import 'package:uuid/uuid.dart';
 
 import '/blocs/auth/auth_bloc.dart';
+import '/config/paths.dart';
 import '/config/shared_prefs.dart';
 import '/cubits/connect/connect_cubit.dart';
 import '/enums/connect_status.dart';
+import '/models/app_user.dart';
 import '/models/connect.dart';
+import '/screens/call/agora_voice_call.dart';
 import '/screens/chat/chat_screen.dart';
 import '/screens/dashboard/cubit/dashboard_cubit.dart';
 import '/screens/login/login_screen.dart';
 import '/screens/notifictions/cubit/notifications_cubit.dart';
 import '/screens/notifictions/notifications_screen.dart';
+import '/services/local_notification_service.dart';
 import '/widgets/app_drawer.dart';
 import '/widgets/display_image.dart';
 import '/widgets/loading_indicator.dart';
@@ -57,6 +57,8 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
         final name = event.userInfo?['name'];
         final userId = event.userInfo?['userId'];
         final profilePic = event.userInfo?['profilePic'];
+        final channelName = event.userInfo?['channelName'] ?? 'TEST';
+
         final user = AppUser(
           name: name,
           userId: userId,
@@ -66,7 +68,8 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
         print('name onCallAccepted: $name');
 
         Navigator.of(context).pushNamed(AgoraVoiceCall.routeName,
-            arguments: AgoraVoiceCallArgs(otherUser: user));
+            arguments:
+                AgoraVoiceCallArgs(otherUser: user, channelName: channelName));
       },
       onCallRejected: (_) async {
         print('onCallRejected');
@@ -110,18 +113,27 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
         }
 
         FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+          // if (message.notification != null) {
+          //   await localNotifcationHelper.showNotificationMediaStyle(
+          //     message: message,
+          //   );
+          // }
           final data = message.data;
           print('onMessage: $data');
-          //final sessionId = data['sessionId'];
+          final sessionId = data['sessionId'];
           final name = data['callerName'];
+
           //  final userId = data['callerId'];
           final profilePic = data['callerPhoto'];
+
+          final channelName = data['channelName'] ?? 'TEST';
 
           //  print('onMessage profilePic: $profilePic');
 
           ConnectycubeFlutterCallKit.showCallNotification(
             CallEvent(
-              sessionId: const Uuid().v4(),
+              // sessionId: const Uuid().v4(),
+              sessionId: sessionId ?? const Uuid().v4(),
               callType: 1,
               callerId: 123,
               callerName: name,
@@ -130,6 +142,7 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
                 'name': name,
                 //'userId': userId,
                 'profilePic': profilePic,
+                'channelName': channelName,
               },
             ),
           );
@@ -155,27 +168,43 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
 
           final data = message.data;
           print('onMessage: $data');
-          //final sessionId = data['sessionId'];
+          final channelName = data['channelName'];
+
           final name = data['callerName'];
+
           //  final userId = data['callerId'];
           final profilePic = data['callerPhoto'];
 
-          //  print('onMessage profilePic: $profilePic');
-
-          ConnectycubeFlutterCallKit.showCallNotification(
-            CallEvent(
-              sessionId: const Uuid().v4(),
-              callType: 1,
-              callerId: 123,
-              callerName: name,
-              opponentsIds: const {123},
-              userInfo: {
-                'name': name,
-                //'userId': userId,
-                'profilePic': profilePic,
-              },
+          Navigator.of(context).pushNamed(
+            AgoraVoiceCall.routeName,
+            arguments: AgoraVoiceCallArgs(
+              otherUser: AppUser(
+                name: name,
+                //userId: userId,
+                profileImg: profilePic,
+              ),
+              channelName: channelName,
             ),
           );
+
+          //  print('onMessage profilePic: $profilePic');
+
+          // ConnectycubeFlutterCallKit.showCallNotification(
+          //   CallEvent(
+          //     // sessionId: const Uuid().v4(),
+          //     sessionId: sessionId ?? const Uuid().v4(),
+          //     callType: 1,
+          //     callerId: 123,
+          //     callerName: name,
+          //     opponentsIds: const {123},
+          //     userInfo: {
+          //       'name': name,
+          //       //'userId': userId,
+          //       'profilePic': profilePic,
+          //     },
+          //   ),
+          // );
+
           // Navigator.of(context).pushNamed(AppRouterPath.notificationsScreen);
           print(
               'Message also contained a notification: ${message.notification}');
@@ -212,12 +241,28 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
   void onClickNotification(NotificationResponse response) {
     try {
       if (response.payload != null) {
+        print('Notification payload: ${response.payload}');
+
         final payload = jsonDecode(response.payload!) as Map?;
 
+        print('Notification payload 2: $payload');
         if (payload != null) {
-          final postId = payload['data']['postId'] as String?;
+          //final sessionId = payload['sessionId'];
+          final name = payload['callerName'];
+          final profilePic = payload['callerPhoto'];
+          final channelName = payload['channelName'] ?? 'TEST';
 
-          print('Post id $postId');
+          Navigator.of(context).pushNamed(
+            AgoraVoiceCall.routeName,
+            arguments: AgoraVoiceCallArgs(
+              otherUser: AppUser(
+                name: name,
+                //userId: userId,
+                profileImg: profilePic,
+              ),
+              channelName: channelName,
+            ),
+          );
         }
       }
     } catch (error) {

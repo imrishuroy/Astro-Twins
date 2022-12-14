@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:uuid/uuid.dart';
 
 import '/blocs/auth/auth_bloc.dart';
 import '/models/app_user.dart';
@@ -153,7 +154,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> sendNotificationToOtherUser() async {
+  Future<void> sendNotificationToOtherUser(
+      {required String channelName}) async {
     try {
       HttpsCallable callable =
           FirebaseFunctions.instance.httpsCallable('sendCallNotification');
@@ -161,13 +163,17 @@ class _ChatScreenState extends State<ChatScreen> {
       final resp = await callable.call(<String, dynamic>{
         'receiverId': widget.otherUser?.userId,
         'callerName': widget.otherUser?.name,
-        'callerPhoto': widget.otherUser?.profileImg
+        'callerPhoto': widget.otherUser?.profileImg,
+        'sessionId': const Uuid().v4(),
+        'channelName': channelName,
       });
       print('result: ${resp.data}');
     } catch (error) {
       print('Error in sending notification: $error');
     }
   }
+
+  final channelName = const Uuid().v4();
 
   @override
   Widget build(BuildContext context) {
@@ -270,13 +276,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           const Spacer(),
                           IconButton(
                             // onPressed: () async => _makePhoneCall(),
-                            onPressed: () {
-                              sendNotificationToOtherUser();
+                            onPressed: () async {
+                              await sendNotificationToOtherUser(
+                                  channelName: channelName);
 
+                              // ignore: use_build_context_synchronously
                               Navigator.of(context).pushNamed(
                                 AgoraVoiceCall.routeName,
                                 arguments: AgoraVoiceCallArgs(
                                   otherUser: widget.otherUser,
+                                  channelName: channelName,
                                 ),
                               );
                             },

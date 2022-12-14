@@ -4,19 +4,18 @@ import 'dart:developer';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astro_twins/models/app_user.dart';
 import 'package:astro_twins/repositories/agora/agora_repository.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:uuid/uuid.dart';
 
 import '/screens/call/audio_config.dart' as config;
 import 'call_interface_design.dart';
 
 class AgoraVoiceCallArgs {
   final AppUser? otherUser;
+  final String channelName;
 
-  AgoraVoiceCallArgs({required this.otherUser});
+  AgoraVoiceCallArgs({required this.otherUser, required this.channelName});
 }
 
 /// JoinChannelAudio Example
@@ -24,14 +23,20 @@ class AgoraVoiceCall extends StatefulWidget {
   static const String routeName = '/voice-call';
 
   final AppUser? otherUser;
+  final String channelName;
 
   /// Construct the [AgoraVoiceCall]
-  const AgoraVoiceCall({Key? key, required this.otherUser}) : super(key: key);
+  const AgoraVoiceCall(
+      {Key? key, required this.otherUser, required this.channelName})
+      : super(key: key);
 
   static Route route({required AgoraVoiceCallArgs args}) {
     return MaterialPageRoute(
       settings: const RouteSettings(name: routeName),
-      builder: (_) => AgoraVoiceCall(otherUser: args.otherUser),
+      builder: (_) => AgoraVoiceCall(
+        otherUser: args.otherUser,
+        channelName: args.channelName,
+      ),
     );
   }
 
@@ -53,7 +58,7 @@ class _State extends State<AgoraVoiceCall> {
       _playbackVolume = 100,
       _inEarMonitoringVolume = 100;
   late TextEditingController _controller;
-  ChannelProfileType _channelProfileType =
+  final ChannelProfileType _channelProfileType =
       ChannelProfileType.channelProfileLiveBroadcasting;
 
   Future<void> switchEffect() async {
@@ -123,6 +128,10 @@ class _State extends State<AgoraVoiceCall> {
   }
 
   Future<void> _initEngine() async {
+    // retrieve or request camera and microphone permissions
+    // await [Permission.microphone, Permission.camera].request();
+    await [Permission.microphone].request();
+
     _engine = createAgoraRtcEngine();
     await _engine.initialize(RtcEngineContext(
       appId: config.appId,
@@ -133,6 +142,7 @@ class _State extends State<AgoraVoiceCall> {
         log('[onError] err: $err, msg: $msg');
       },
       onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+        print('checking ------- onJoinChannelSuccess');
         log('[onJoinChannelSuccess] connection: ${connection.toJson()} elapsed: $elapsed');
 
         setState(() {
@@ -145,6 +155,7 @@ class _State extends State<AgoraVoiceCall> {
         // });
       },
       onLeaveChannel: (RtcConnection connection, RtcStats stats) {
+        print('checking ------- onLeaveChannel');
         log('[onLeaveChannel] connection: ${connection.toJson()} stats: ${stats.toJson()}');
         setState(() {
           isJoined = false;
@@ -153,6 +164,8 @@ class _State extends State<AgoraVoiceCall> {
         });
       },
       onUserJoined: (connection, remoteUid, elapsed) {
+        print('checking ------- onUserJoined');
+
         debugPrint('userJoined $remoteUid');
         remoteUid = remoteUid;
         if (playEffect) switchEffect();
@@ -171,14 +184,15 @@ class _State extends State<AgoraVoiceCall> {
     );
   }
 
-  _joinChannel() async {
+  _joinChannel({required String channelName}) async {
+    print('checking ------- _joinChannel');
     // final agoraRepo = context.read<AgoraRepository>();
     final agoraRepo = AgoraRepository();
     if (defaultTargetPlatform == TargetPlatform.android) {
       await Permission.microphone.request();
     }
 
-    const String channelName = 'TestChannel';
+    //const String channelName = 'TestChannel';
 
     final token = await agoraRepo.getToken(channelName: channelName);
 
@@ -200,6 +214,7 @@ class _State extends State<AgoraVoiceCall> {
   }
 
   _leaveChannel() async {
+    print('checking ------- _leaveChannel');
     await _engine.leaveChannel();
     setState(() {
       isJoined = false;
@@ -215,6 +230,7 @@ class _State extends State<AgoraVoiceCall> {
   }
 
   _switchMicrophone() async {
+    print('checking ------- _switchMicrophone');
     // await await _engine.muteLocalAudioStream(!openMicrophone);
     await _engine.enableLocalAudio(!openMicrophone);
     setState(() {
@@ -223,6 +239,7 @@ class _State extends State<AgoraVoiceCall> {
   }
 
   _switchSpeakerphone() async {
+    print('checking ------- _switchSpeakerphone');
     await _engine.setEnableSpeakerphone(!enableSpeakerphone);
     setState(() {
       enableSpeakerphone = !enableSpeakerphone;
@@ -254,12 +271,14 @@ class _State extends State<AgoraVoiceCall> {
   }
 
   _onChangeInEarMonitoringVolume(double value) async {
+    print('checking ------- _onChangeInEarMonitoringVolume');
     _inEarMonitoringVolume = value;
     await _engine.setInEarMonitoringVolume(_inEarMonitoringVolume.toInt());
     setState(() {});
   }
 
   _toggleInEarMonitoring(value) async {
+    print('checking ------- _toggleInEarMonitoring');
     try {
       await _engine.enableInEarMonitoring(
           enabled: value,
@@ -273,31 +292,19 @@ class _State extends State<AgoraVoiceCall> {
 
   int _callTimer = 0;
 
-  Future<void> sendNotificationToOtherUser() async {
-    try {
-      HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('sendCallNotification');
-
-      final resp = await callable.call(<String, dynamic>{
-        'receiverId': widget.otherUser?.userId,
-        'name': widget.otherUser?.name,
-        'sessionId': const Uuid().v4(),
-      });
-      print('result: ${resp.data}');
-    } catch (error) {
-      print(error);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     ///return
 
     return CallInterfaceDesign(
-      onTapCall: isJoined ? _leaveChannel : _joinChannel,
+      onTapCall: () {
+        if (isJoined) {
+          _leaveChannel();
+        } else {
+          _joinChannel(channelName: widget.channelName);
+        }
+      },
       duration: _callTimer,
-
-      /// isJoined: isJoined,
       isJoined: isJoined,
       switchMicrophone: _switchSpeakerphone,
       isOnSpeaker: enableSpeakerphone,
@@ -305,163 +312,163 @@ class _State extends State<AgoraVoiceCall> {
       cancelCall: _leaveChannel,
     );
 
-    final channelProfileType = [
-      ChannelProfileType.channelProfileLiveBroadcasting,
-      ChannelProfileType.channelProfileCommunication,
-    ];
-    final items = channelProfileType
-        .map((e) => DropdownMenuItem(
-              value: e,
-              child: Text(
-                e.toString().split('.')[1],
-              ),
-            ))
-        .toList();
+    // final channelProfileType = [
+    //   ChannelProfileType.channelProfileLiveBroadcasting,
+    //   ChannelProfileType.channelProfileCommunication,
+    // ];
+    // final items = channelProfileType
+    //     .map((e) => DropdownMenuItem(
+    //           value: e,
+    //           child: Text(
+    //             e.toString().split('.')[1],
+    //           ),
+    //         ))
+    //     .toList();
 
-    return SafeArea(
-      child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(14.0),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(hintText: 'Channel ID'),
-                  ),
-                  const Text('Channel Profile: '),
-                  DropdownButton<ChannelProfileType>(
-                      items: items,
-                      value: _channelProfileType,
-                      onChanged: isJoined
-                          ? null
-                          : (v) async {
-                              setState(() {
-                                _channelProfileType = v!;
-                              });
-                            }),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: ElevatedButton(
-                          onPressed: isJoined ? _leaveChannel : _joinChannel,
-                          child: Text('${isJoined ? 'Leave' : 'Join'} channel'),
-                        ),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-              Align(
-                  alignment: Alignment.bottomRight,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 20, horizontal: 0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _switchMicrophone,
-                          child: Text(
-                              'Microphone ${openMicrophone ? 'on' : 'off'}'),
-                        ),
-                        ElevatedButton(
-                          onPressed: isJoined ? _switchSpeakerphone : null,
-                          child: Text(
-                              enableSpeakerphone ? 'Speakerphone' : 'Earpiece'),
-                        ),
-                        if (!kIsWeb)
-                          ElevatedButton(
-                            onPressed: isJoined ? _switchEffect : null,
-                            child:
-                                Text('${playEffect ? 'Stop' : 'Play'} effect'),
-                          ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const Text('RecordingVolume:'),
-                            Slider(
-                              value: _recordingVolume,
-                              min: 0,
-                              max: 400,
-                              divisions: 5,
-                              label: 'RecordingVolume',
-                              onChanged: isJoined
-                                  ? (double value) async {
-                                      setState(() {
-                                        _recordingVolume = value;
-                                      });
-                                      await _engine.adjustRecordingSignalVolume(
-                                          value.toInt());
-                                    }
-                                  : null,
-                            )
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const Text('PlaybackVolume:'),
-                            Slider(
-                              value: _playbackVolume,
-                              min: 0,
-                              max: 400,
-                              divisions: 5,
-                              label: 'PlaybackVolume',
-                              onChanged: isJoined
-                                  ? (double value) async {
-                                      setState(() {
-                                        _playbackVolume = value;
-                                      });
-                                      await _engine.adjustPlaybackSignalVolume(
-                                          value.toInt());
-                                    }
-                                  : null,
-                            )
-                          ],
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(mainAxisSize: MainAxisSize.min, children: [
-                              const Text('InEar Monitoring Volume:'),
-                              Switch(
-                                value: _enableInEarMonitoring,
-                                onChanged:
-                                    isJoined ? _toggleInEarMonitoring : null,
-                                activeTrackColor: Colors.grey[350],
-                                activeColor: Colors.white,
-                              )
-                            ]),
-                            if (_enableInEarMonitoring)
-                              SizedBox(
-                                  width: 300,
-                                  child: Slider(
-                                    value: _inEarMonitoringVolume,
-                                    min: 0,
-                                    max: 100,
-                                    divisions: 5,
-                                    label:
-                                        'InEar Monitoring Volume $_inEarMonitoringVolume',
-                                    onChanged: isJoined
-                                        ? _onChangeInEarMonitoringVolume
-                                        : null,
-                                  ))
-                          ],
-                        ),
-                      ],
-                    ),
-                  ))
-            ],
-          ),
-        ),
-      ),
-    );
+    // return SafeArea(
+    //   child: Scaffold(
+    //     body: Padding(
+    //       padding: const EdgeInsets.all(14.0),
+    //       child: Stack(
+    //         children: [
+    //           Column(
+    //             crossAxisAlignment: CrossAxisAlignment.start,
+    //             mainAxisAlignment: MainAxisAlignment.start,
+    //             children: [
+    //               TextField(
+    //                 controller: _controller,
+    //                 decoration: const InputDecoration(hintText: 'Channel ID'),
+    //               ),
+    //               const Text('Channel Profile: '),
+    //               DropdownButton<ChannelProfileType>(
+    //                   items: items,
+    //                   value: _channelProfileType,
+    //                   onChanged: isJoined
+    //                       ? null
+    //                       : (v) async {
+    //                           setState(() {
+    //                             _channelProfileType = v!;
+    //                           });
+    //                         }),
+    //               Row(
+    //                 children: [
+    //                   Expanded(
+    //                     flex: 1,
+    //                     child: ElevatedButton(
+    //                       onPressed: isJoined ? _leaveChannel : _joinChannel,
+    //                       child: Text('${isJoined ? 'Leave' : 'Join'} channel'),
+    //                     ),
+    //                   )
+    //                 ],
+    //               ),
+    //             ],
+    //           ),
+    //           Align(
+    //               alignment: Alignment.bottomRight,
+    //               child: Padding(
+    //                 padding:
+    //                     const EdgeInsets.symmetric(vertical: 20, horizontal: 0),
+    //                 child: Column(
+    //                   mainAxisSize: MainAxisSize.min,
+    //                   crossAxisAlignment: CrossAxisAlignment.end,
+    //                   children: [
+    //                     ElevatedButton(
+    //                       onPressed: _switchMicrophone,
+    //                       child: Text(
+    //                           'Microphone ${openMicrophone ? 'on' : 'off'}'),
+    //                     ),
+    //                     ElevatedButton(
+    //                       onPressed: isJoined ? _switchSpeakerphone : null,
+    //                       child: Text(
+    //                           enableSpeakerphone ? 'Speakerphone' : 'Earpiece'),
+    //                     ),
+    //                     if (!kIsWeb)
+    //                       ElevatedButton(
+    //                         onPressed: isJoined ? _switchEffect : null,
+    //                         child:
+    //                             Text('${playEffect ? 'Stop' : 'Play'} effect'),
+    //                       ),
+    //                     Row(
+    //                       mainAxisAlignment: MainAxisAlignment.end,
+    //                       children: [
+    //                         const Text('RecordingVolume:'),
+    //                         Slider(
+    //                           value: _recordingVolume,
+    //                           min: 0,
+    //                           max: 400,
+    //                           divisions: 5,
+    //                           label: 'RecordingVolume',
+    //                           onChanged: isJoined
+    //                               ? (double value) async {
+    //                                   setState(() {
+    //                                     _recordingVolume = value;
+    //                                   });
+    //                                   await _engine.adjustRecordingSignalVolume(
+    //                                       value.toInt());
+    //                                 }
+    //                               : null,
+    //                         )
+    //                       ],
+    //                     ),
+    //                     Row(
+    //                       mainAxisAlignment: MainAxisAlignment.end,
+    //                       children: [
+    //                         const Text('PlaybackVolume:'),
+    //                         Slider(
+    //                           value: _playbackVolume,
+    //                           min: 0,
+    //                           max: 400,
+    //                           divisions: 5,
+    //                           label: 'PlaybackVolume',
+    //                           onChanged: isJoined
+    //                               ? (double value) async {
+    //                                   setState(() {
+    //                                     _playbackVolume = value;
+    //                                   });
+    //                                   await _engine.adjustPlaybackSignalVolume(
+    //                                       value.toInt());
+    //                                 }
+    //                               : null,
+    //                         )
+    //                       ],
+    //                     ),
+    //                     Column(
+    //                       mainAxisSize: MainAxisSize.min,
+    //                       crossAxisAlignment: CrossAxisAlignment.end,
+    //                       children: [
+    //                         Row(mainAxisSize: MainAxisSize.min, children: [
+    //                           const Text('InEar Monitoring Volume:'),
+    //                           Switch(
+    //                             value: _enableInEarMonitoring,
+    //                             onChanged:
+    //                                 isJoined ? _toggleInEarMonitoring : null,
+    //                             activeTrackColor: Colors.grey[350],
+    //                             activeColor: Colors.white,
+    //                           )
+    //                         ]),
+    //                         if (_enableInEarMonitoring)
+    //                           SizedBox(
+    //                               width: 300,
+    //                               child: Slider(
+    //                                 value: _inEarMonitoringVolume,
+    //                                 min: 0,
+    //                                 max: 100,
+    //                                 divisions: 5,
+    //                                 label:
+    //                                     'InEar Monitoring Volume $_inEarMonitoringVolume',
+    //                                 onChanged: isJoined
+    //                                     ? _onChangeInEarMonitoringVolume
+    //                                     : null,
+    //                               ))
+    //                       ],
+    //                     ),
+    //                   ],
+    //                 ),
+    //               ))
+    //         ],
+    //       ),
+    //     ),
+    //   ),
+    // );
   }
 }

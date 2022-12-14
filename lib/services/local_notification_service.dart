@@ -146,6 +146,9 @@ class LocalNotificationService {
             playSound: true,
             icon: 'launch_background',
           ),
+          iOS: const DarwinNotificationDetails(
+            categoryIdentifier: darwinNotificationCategoryPlain,
+          ),
         ),
         payload: jsonEncode(message.data),
       );
@@ -177,6 +180,9 @@ class LocalNotificationService {
             largeIcon: largeIconPath != null
                 ? FilePathAndroidBitmap(largeIconPath)
                 : null,
+          ),
+          iOS: const DarwinNotificationDetails(
+            categoryIdentifier: darwinNotificationCategoryPlain,
           ),
         ),
         payload: jsonEncode(message.data),
@@ -228,6 +234,9 @@ class LocalNotificationService {
           // channelDescription,
           priority: Priority.high,
           importance: Importance.max,
+        ),
+        iOS: const DarwinNotificationDetails(
+          categoryIdentifier: darwinNotificationCategoryPlain,
         ),
         // iOS: const IOSNotificationDetails(
         //   subtitle: 'Reminder',
